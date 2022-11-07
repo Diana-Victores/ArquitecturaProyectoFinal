@@ -337,8 +337,255 @@ subcadena3_2 db 10,13, "2. Distancia de Leveshtein ","$"
 subcadena3_3 db 10,13, "3. Codificar un mensaje. ","$" 
 subcadena3_4 db 10,13, "4. Distancia de Hamming ","$"   
 subcadena3_5 db 10,13, "5. Codificar un mensaje. ","$" 
-subcadena3_6 db 10,13, "6. Distancia de Hamming ","$"
+subcadena3_6 db 10,13, "6. Distancia de Hamming ","$" 
 
+name "snake"
+ 
+org     100h
+ 
+; jump over data section:
+jmp     start
+ 
+; ------ data section ------
+ 
+s_size  equ     7
+ 
+; the snake coordinates
+; (from head to tail)
+; low byte is left, high byte
+; is top - [top, left]
+snake dw s_size dup(0)
+ 
+tail    dw      ?
+ 
+ 
+; ENUMS for grow_state
+  NO_CHANGE	= 0
+  BIGGER	= 1
+  SMALLER	= 2
+ 
+   NSEOI_OCW2 = 00100001b
+  PC_PIC	 = 20h
+ 
+; direction constants
+;          (bios key codes):
+left    equ     4bh
+right   equ     4dh
+up      equ     48h
+down    equ     50h
+ 
+cur_dir db      right
+wait_time dw    0
+ 
+start:
+ 
+     ; variables used for random
+  food_x    DB 1					; cordinates of the next food
+  food_y    DB 1					;
+  attribute DB 13					; color of next food
+  char      DB 41h				; char of next food
+  food_type DB 1  	; type of next food,
+				;0: '-' (makes snake smaller), o.w: ABC char
+ 
+   ; variables for current food
+  cur_food_x         DB 0
+  cur_food_y         DB 0
+  cur_food_type      DB 0
+  cur_food_char      DB 0
+  cur_food_attribute DB 0
+ 
+  grow_state 	DB NO_CHANGE ; options: NO_CHANGE, BIGGER or SMALLER
+ 
+  ezer_word  	DW 0
+  ezer_byte  	DB 0
+  ezer_byte2 	DB 0
+  direction_for_next_cycle DB UP  	; contains the direction for next
+						  ;cycle in main_loop
+  one_before 	DB 0		; flag to use in 'erase_tail' (see there)
+ 
+ 
+ 
+   .code
+  mov ax,@data ; ds<-@data
+  mov ds,ax
+ 
+   ;call print_food
+  ;call change_key_stroke_interrupt   ; changes the adress of routine resposible to response to key-stroke
+                                     ; to perform 'update_direction'
+  ;main_loop:
+   ;   mov loop_counter,0
+      ;call actions  ; performs all tasks for one movement: upadtes snake on screen, checks collision etc
+ 
+ 
+ 
+; hide text cursor:
+mov     ah, 1
+mov     ch, 2bh
+mov     cl, 0bh
+int     10h
+ 
+game_loop:
+ 
+; === select first video page
+mov     al, 0  ; page number.
+mov     ah, 05h
+int     10h
+ 
+; === show new head:
+mov     dx, snake[0]
+ 
+; set cursor at dl,dh
+mov     ah, 02h
+int     10h
+ 
+; print '*' at the location:
+mov     al, '*'
+mov     ah, 09h
+mov     bl, 0eh ; attribute.
+mov     cx, 1   ; single char.
+int     10h
+ 
+; === keep the tail:
+mov     ax, snake[s_size * 2 - 2]
+mov     tail, ax
+ 
+call    move_snake
+ 
+ 
+ 
+ 
+; === hide old tail:   solo la cabeza del gusanito cursor
+mov     dx, tail
+ 
+; set cursor at dl,dh       solo la cabeza del gusanito cursor
+mov     ah, 02h
+int     10h
+ 
+; print ' ' at the location:    necesario para que no se cicle
+mov     al, ' '
+mov     ah, 09h
+mov     bl, 0eh ; attribute.
+mov     cx, 1   ; single char.
+int     10h
+ 
+check_for_key:
+ 
+; === check for player commands:
+mov     ah, 01h
+int     16h
+jz      no_key
+ 
+mov     ah, 00h
+int     16h
+ 
+cmp     al, 1bh    ; esc - key?
+je      stop_game  ;
+ 
+mov     cur_dir, ah
+ 
+no_key:
+ 
+ 
+ 
+; === wait a few moments here:
+; get number of clock ticks
+; (about 18 per second)
+; since midnight into cx:dx
+mov     ah, 00h
+int     1ah
+cmp     dx, wait_time
+jb      check_for_key
+add     dx, 4
+mov     wait_time, dx
+ 
+; === eternal game loop:
+jmp     game_loop
+ 
+ 
+stop_game:
+ 
+; show cursor back:
+mov     ah, 1
+mov     ch, 0bh
+mov     cl, 0bh
+int     10h
+ 
+ret
+ 
+ 
+  move_snake proc near
+    ; set es to bios info segment:
+mov     ax, 40h
+mov     es, ax
+ 
+  ; point di to tail
+  mov   di, s_size * 2 - 2
+  ; move all body parts
+  ; (last one simply goes away)
+  mov   cx, s_size-1
+move_array:
+  mov   ax, snake[di-2]
+  mov   snake[di], ax
+  sub   di, 2
+  loop  move_array
+ 
+  cmp     cur_dir, left
+  je    move_left
+cmp     cur_dir, right
+  je    move_right
+cmp     cur_dir, up
+  je    move_up
+cmp     cur_dir, down
+  je    move_down
+ 
+jmp     stop_move       ; no direction.
+ 
+move_left:
+  mov   al, b.snake[0]
+  dec   al
+  mov   b.snake[0], al
+  cmp   al, -1
+  jne   stop_move
+  mov   al, es:[4ah]    ; col number.
+  dec   al
+  mov   b.snake[0], al  ; return to right.
+  jmp   stop_move
+ 
+  move_right:
+ 
+  mov   al, b.snake[0]
+  inc   al
+  mov   b.snake[0], al
+  cmp   al, es:[4ah]    ; col number.
+  jb    stop_move
+  mov   b.snake[0], 0   ; return to left.
+  jmp   stop_move
+ 
+  move_up:
+  mov   al, b.snake[1]
+  dec   al
+  mov   b.snake[1], al
+  cmp   al, -1
+  jne   stop_move
+  mov   al, es:[84h]    ; row number -1.
+  mov   b.snake[1], al  ; return to bottom.
+  jmp   stop_move
+ 
+  move_down:
+  mov   al, b.snake[1]
+  inc   al
+  mov   b.snake[1], al
+  cmp   al, es:[84h]    ; row number -1.
+  jbe   stop_move
+  mov   b.snake[1], 0   ; return to top.
+  jmp   stop_move
+ 
+  ;loop_counter,0
+ 
+  stop_move:
+  ret
+move_snake endp                                                      
+                                                      
 ; --------- FIBONACCI --------------------------------------------------------   
 
 subcadenat4  db "Operaciones De Recurrencia ","$" 
