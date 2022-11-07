@@ -520,7 +520,7 @@ ret
 Fibonacci:
 call clear_screen
 
-PUSH    AX        ; this maro is copied from emu8086.inc ;
+PUSH    AX        
 
         MOV     AH, 0Eh
         INT     10h     
@@ -528,97 +528,99 @@ PUSH    AX        ; this maro is copied from emu8086.inc ;
 ENDM
 
 JMP start2       ; jump to start label
-msg1 db "please enter the number of elemants in the sequance $" , 0Dh,0Ah, 24h ; define variable (message):
-num1 dw ?       ; number
+msg1 db "porfavor ingrese una valor para la cadena $" , 0Dh,0Ah, 24h ; define la variable 
+num1 dw ?       
 
-start2:  LEA     DX, msg1  ; load effective address of msg into dx.
-        MOV     AH, 09h   ; print function is 9.
-        INT     21h       ; do it 
+start2:  LEA     DX, msg1  ; carga direccion dx.
+        MOV     AH, 09h   
+        INT     21h       
               
-CALL SCAN_NUM   ; get the multi-digit signed number from the keyboard, and store the result in cx register:
+CALL SCAN_NUM   ; obtenga el numero firmado de varios dígitos del teclado y almacene el resultado en el registro cx:
 MOV num1,cx     
-putc 0Dh        ; new line:
+putc 0Dh        
 putc 0Ah        
 
-CMP CX, 1                  ; compare cx with one
-JLE lessthan               ; if cx is less than 1 jump to lessthan label
+CMP CX, 1                  
+JLE lessthan               
     
-greater_or_equal:          ; if cx isn't less than 1
-    CMP CX, 25             ; compare cx with 25
-    JLE lessthan_or_equal  ; if cx less than 25 jump to less_or_equal
+greater_or_equal:          ; si cx no es menor que 1  / se hace comparacion
+    CMP CX, 25             ; compara cx con 25
+    JLE lessthan_or_equal  ; si cx es menor que 25 salta a less_or_equal
     
-    greater__or__equal:    ; if cx more than 25
-        JMP restart        ; jump to restart label
-        msg2 db "please enter suitabal number in range of [1,25] $" , 0Dh,0Ah, 24h  ; define variable (message):
+    greater__or__equal:   
+        JMP restart        ; salta a restart label
+        msg2 db "por favor ingrese el número adecuado en el rango de [1,25] $" , 0Dh,0Ah, 24h  ; define variable
         
     
-        restart:  LEA     DX, msg2  ; load effective address of msg into dx.
-                  MOV     AH, 09h   ; print function is 9.
-                  INT     21h       ; do it
+        restart:  LEA     DX, msg2  ; direccion del mensaje dx
+                  MOV     AH, 09h   
+                  INT     21h       
                 
                   MOV     AH, 0 
-                  INT     16h       ; wait for any key any....  
-                  putc 0Dh          ; new line:
+                  INT     16h       ; espera tecla de usuario  
+                  putc 0Dh         
                   putc 0Ah
-                  JMP start2         ; jump to start label
+                  JMP start2         ; salta a etiqueta inicio
                                   
-lessthan:                 ; less than label
-    CMP     CX, 0         ; compare cx with 0
-    JNZ     restart2      ; if cx not equal 0 jump to restart2
-    JE stop               ; if cx equal to 0 jump to stop label
+lessthan:                 
+    CMP     CX, 0         ; comparar cx con 0
+    JNZ     restart2      ; si cx no es igual a 0 salta a reiniciar
+    JE stop               ; si cx es igual a 0 salta a la etiqueta en stop
 
-    stop:                 ; stop label
+    stop:              
     MOV AH, 4CH
-    MOV AL, 01            ; your return code.
-    INT 21H               ; do it
+    MOV AL, 01            ;retorno
+    INT 21H              
         
-    JMP restart2          ; jump to restart2 label                               
-    msg3 db "please enter suitabal number in range of [1,25] $" , 0Dh,0Ah, 24h      ; define variable (message):
+    JMP restart2                                         
+    msg3 db "por favor ingrese el número adecuado en el rango de [1,25] $" , 0Dh,0Ah, 24h     
+                                                     ; define variable
     
     restart2:
-               CMP     CX, 1                 ; compare cx with one
-               JE      faboo                 ; faboo than labe
-               LEA     DX, msg3              ; load effective address of msg into dx.
-               MOV     AH, 09h               ; print function is 9.
-               INT     21h                   ; do it
+               CMP     CX, 1                 ; compara cx con uno
+               JE      faboo                 
+               LEA     DX, msg3              ; cargue la direccion efectiva de msg en dx.
+               MOV     AH, 09h               
+               INT     21h                   
                
                MOV     AH, 0 
-               INT     16h                   ; wait for any key any....
-               putc 0Dh                      ; new line:
+               INT     16h                   
+               putc 0Dh                      
                putc 0Ah
-               JMP start2                     ; jump to start label
+               JMP start2                     
                              
-    lessthan_or_equal:              ; lessthan_or_equal label
-        MOV BX, 1                   ; move 1 to bx
-        MOV AX , 0                  ; move 0 to ax
-        CALL PRINT_NUM              ; call print_num label (print the value in ax)
-        MOV AX , 1                  ; move 1 to ax
-        CALL PRINT_NUM              ; call print_num label (print the value in ax)
-        SUB CX, 1                   ; substract 1 from cx
+    lessthan_or_equal:              ; etiqueta menor que o igual
+        MOV BX, 1                   
+        MOV AX , 0                  
+        CALL PRINT_NUM              ; llame a la etiqueta print_num (imprima el valor en ax)
+        MOV AX , 1                  
+        CALL PRINT_NUM              
+        SUB CX, 1                   ; resta 1 de cx
         fabo:   
-                ADD AX,BX           ; add ax to bx and store result at ax
-                MOV [SI],AX         ; move ax to memory location si
-                MOV AX,BX           ; move bx to ax
-                MOV BX,[SI]         ; move data of memory location si to bx
-                CALL PRINT_NUM      ; call print_num label (print the value in ax)
-                INC SI              ; increment si
+                ADD AX,BX           ; agregue ax a bx y almacene el resultado en ax
+                MOV [SI],AX         
+                MOV AX,BX           
+                MOV BX,[SI]         
+                CALL PRINT_NUM      
+                INC SI              ; incrementa si
                 
-        LOOP fabo R                 ; loop the label fabo number of loops equal to the value of cx
-        putc 0Dh                    ; new line:
+        LOOP fabo R                 ;bucle fabo numero de bucles igual al valor de cx
+        putc 0Dh                    
         putc 0Ah
-        JMP start2                   ; jump to start label 
+        JMP start2                  
         
         faboo:                 
-                MOV AX , 0                  ; move 0 to ax; move 0 to ax
-                CALL PRINT_NUM              ; call print_num label (print the value in ax)
-                MOV AX , 1                  ; move 1 to ax
-                CALL PRINT_NUM              ; call print_num label (print the value in ax)
-                putc 0Dh                    ; new line:
+                MOV AX , 0                  
+                CALL PRINT_NUM              
+                MOV AX , 1                  
+                CALL PRINT_NUM             
+                putc 0Dh                    
                 putc 0Ah
-                JMP start2                   ; jump to start label 
+                JMP start2                  
 
-; these functions are copied from emu8086.inc                                                            
-; gets the multi-digit SIGNED number from the keyboard and stores the result in CX register:                                  
+                                                           
+; obtiene el numero FIRMADO de varios dígitos del teclado y almacena el resultado en 
+;el registro CX:                                  
 SCAN_NUM2        PROC    NEAR
         PUSH    DX         
         PUSH    AX         
@@ -631,36 +633,36 @@ SCAN_NUM2        PROC    NEAR
 
 next_digit:
 
-        ; get char from keyboard
+        ;obtener caracteres del teclado
         ; into AL:
         MOV     AH, 00h
         INT     16h
-        ; and print it:
+        ; imprimirlo
         MOV     AH, 0Eh
         INT     10h
 
-        ; check for MINUS:
+        
         CMP     AL, '-'
         JE      set_minus
 
-        ; check for ENTER key:
-        CMP     AL, 0Dh  ; carriage return?
+      ; verifique la tecla ENTER:
+        CMP     AL, 0Dh  
         JNE     not_cr
         JMP     stop_input
 not_cr:
 
-        CMP     AL, 8                   ; 'BACKSPACE' pressed?
+        CMP     AL, 8                   ; retrocedo
         JNE     backspace_checked
-        MOV     DX, 0                   ; remove last digit by
+        MOV     DX, 0                   ; eliminar el último dígito por
         MOV     AX, CX                  ; division:
         DIV     CS:ten                  ; AX = DX:AX / 10 (DX-rem).
         MOV     CX, AX
         PUTC    ' '                     ; clear position.
-        PUTC    8                       ; backspace again.
+        PUTC    8                       ; retroceder de nuevo.
         JMP     next_digit
 backspace_checked:
 
-        ; allow only digits:
+        ;permite solo digitos
         CMP     AL, '0'
         JAE     ok_AE_0
         JMP     remove_not_digit
@@ -668,32 +670,32 @@ ok_AE_0:
         CMP     AL, '9'
         JBE     ok_digit
 remove_not_digit:       
-        PUTC    8          ; backspace.
-        PUTC    ' '        ; clear last entered not digit.
-        PUTC    8          ; backspace again.        
-        JMP     next_digit ; wait for next input.       
+        PUTC    8          ; retroceder
+        PUTC    ' '        ;borrar el último digito no ingresado
+        PUTC    8          ;retroceder de nuevo.        
+        JMP     next_digit ; esperar a la siguiente entrada.       
 ok_digit:
 
 
-        ; multiply CX by 10 (first time the result is zero)
+        ; multiplica CX por 10 (primera vez el resultado es cero)
         PUSH    AX
         MOV     AX, CX
         MUL     CS:ten     ; DX:AX = AX*10
         MOV     CX, AX
         POP     AX
 
-        ; check if the number is too big (result should be 16 bits) 
+        ; compruebe si el numero es demasiado grande. 16 bits
         CMP     DX, 0
         JNE     too_big
 
-        ; convert from ASCII code:
+        ; convertir de código ASCII
         SUB     AL, 30h
 
-        ; add AL to CX:
+        
         MOV     AH, 0
-        MOV     DX, CX     ; backup, in case the result will be too big.
+        MOV     DX, CX     
         ADD     CX, AX
-        JC      too_big2   ; jump if the number is too big.
+        JC      too_big2   ; salta si el número es demasiado grande.
 
         JMP     next_digit
 
@@ -702,20 +704,19 @@ set_minus:
         JMP     next_digit
 
 too_big2:
-        MOV     CX, DX     ; restore the backuped value before add.
-        MOV     DX, 0      ; DX was zero before backup!
+        MOV     CX, DX     
+        MOV     DX, 0      
 too_big:
         MOV     AX, CX
         DIV     CS:ten     ; reverse last DX:AX = AX*10, make AX = DX:AX / 10
         MOV     CX, AX
-        PUTC    8          ; backspace.
-        PUTC    ' '        ; clear last entered digit.
-        PUTC    8          ; backspace again.        
-        JMP     next_digit ; wait for Enter/Backspace.
-        
-        
+        PUTC    8          ; retroceso.
+        PUTC    ' '        ; 
+        PUTC    8          ; retroceder de nuevo.        
+        JMP     next_digit ; espere Entrar/Retroceso.
+             
 stop_input:
-        ; check flag:
+        
         CMP     CS:make_minus, 0
         JE      not_minus
         NEG     CX
@@ -725,10 +726,11 @@ not_minus:
         POP     AX
         POP     DX
         RET
-make_minus      DB      ?       ; used as a flag.
-SCAN_NUM2        ENDP
+make_minus      DB      ?       
+SCAN_NUM2       ENDP
 
-; this procedure prints number in AX used with PRINT_NUM_UNS to print signed numbers: 
+; este procedimiento imprime el numero en AX usado con PRINT_NUM_UNS
+; para imprimir numeros con signo:
 PRINT_NUM2       PROC    NEAR
         PUSH    DX
         PUSH    AX
@@ -740,7 +742,7 @@ PRINT_NUM2       PROC    NEAR
         JMP     printed
 
 not_zero:
-        ; the check SIGN of AX make absolute if it's negative: 
+        ; el SIGNO de verificación de AX se convierte en absoluto si es negativo
         CMP     AX, 0
         JNS     positive
         NEG     AX
@@ -756,55 +758,47 @@ printed:
         RET
 PRINT_NUM2       ENDP
     
-; this procedure prints out an unsigned number in AX (not just a single digit) allowed values are from 0 to 65535 (FFFF) 
+
 PRINT_NUM_UNS2   PROC    NEAR
         PUSH    AX
         PUSH    BX
         PUSH    CX
         PUSH    DX
 
-        ; flag to prevent printing zeros before number:
+        ;bandera para evitar la impresión de ceros antes del número:
         MOV     CX, 1
 
-        ; (result of "/ 10000" is always less or equal to 9).
-        MOV     BX, 10000       ; 2710h - divider.
-
-        ; AX is zero?
+        ; (result of "/ 10000" siempre es menor o igual a 9).
+        MOV     BX, 10000       
         CMP     AX, 0
         JZ      print_zero
 
 begin_print:
 
-        ; check divider (if zero go to end_print):
+        ; verifique el divisor (si es cero, vaya a end_print):
         CMP     BX,0
         JZ      end_print
-
-        ; avoid printing zeros before number:
         CMP     CX, 0
         JE      calc
-        ; if AX<BX then result of DIV will be zero:
         CMP     AX, BX
         JB      skip
 calc:
-        MOV     CX, 0   ; set flag.
+        MOV     CX, 0   
 
         MOV     DX, 0
-        DIV     BX      ; AX = DX:AX / BX   (DX=remainder).
+        DIV     BX      
 
-        ; print last digit
-        ; AH is always ZERO, so it's ignored
-        ADD     AL, 30h    ; convert to ASCII code.
+       ; AH siempre es CERO, por lo que se ignora
+        ADD     AL, 30h    
         PUTC    AL
-
-
-        MOV     AX, DX  ; get remainder from last div.
+        MOV     AX, DX  ; obtener el resto de la última div.
 
 skip:
-        ; calculate BX=BX/10
+       
         PUSH    AX
         MOV     DX, 0
         MOV     AX, BX
-        DIV     CS:ten  ; AX = DX:AX / 10   (DX=remainder).
+        DIV     CS:ten  ; AX = DX:AX / 10   (DX=resto).
         MOV     BX, AX
         POP     AX
 
@@ -822,6 +816,6 @@ end_print:
         RET
 PRINT_NUM_UNS2   ENDP  
 
-ten DW 10      ; used as multiplier/divider by SCAN_NU
+ten DW 10      
 
 ret
