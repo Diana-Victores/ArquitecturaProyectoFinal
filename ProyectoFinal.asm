@@ -1,4 +1,3 @@
-
 ; You may customize this and other start-up templates; 
 ; The location of this template is c:\emu8086\inc\0_com_template.txt
 include 'emu8086.inc'
@@ -180,7 +179,8 @@ ret
     
     ;-- llamada a submenu2
     call opcion_submenu2
-    ret 
+    ret    
+    
      ; --- procedimiento proc
     opcion_submenu2 PROC     
         cmp al, 31h     ;compara el dato ingresado con el numero 1 ascii
@@ -203,8 +203,22 @@ ret
     mov ah,9
     int 21h
     
-    ret
+      ;-- lectura / Recibir opcion
+    mov ah, 1
+    mov dx,20
+    int 21h
     
+    ;-- llamada a submenu2
+    call opcion_submenu3
+   
+    ret
+        
+    opcion_submenu3 PROC     
+        cmp al, 31h     ;compara el dato ingresado con el numero 1 ascii
+        je Juego_Snake  ;salta al juego snake
+        
+        ret
+     opcion_submenu3 ENDP    
     
     
     sub_menu4:
@@ -261,10 +275,8 @@ ret
     mov dl,25  ;columna
     mov ah,2
     int 10h
-    ret
-    
-    
-                                               
+    ret 
+                                             
 
 ret
 
@@ -275,7 +287,8 @@ cadena4  db 10,13,"2. Operaciones de Cadenas","$"
 cadena5  db 10,13,"3. Juego","$"
 cadena6  db 10,13,"4. Operaciones de Recurrencia","$"
 cadena7  db 10,13,"5. Salir","$" 
-cadena8  db 10,13,"Ingrese una opcion :","$"  
+cadena8  db 10,13,"Ingrese una opcion :","$"   
+
 
    ;--- OPERACIONES BASICAS --------------------------------------------------
 subcadenat1  db "Operaciones Basicas","$"  
@@ -284,7 +297,7 @@ subcadena1_2 db 10,13, "2. Resta ","$"
 subcadena1_3 db 10,13, "3. Multiplicacion ","$" 
 
 
-   ;---- PALINDORMA ----------------------------------------------------------
+   ;---- PALINDROMA ----------------------------------------------------------
 subcadenat2  db "Operaciones De Cadenas","$" 
 subcadena2_1 db 10,13, "1. Determinar si una cadena es palindroma ","$" 
    
@@ -504,23 +517,272 @@ jne for()
 
 mov al,aux1 ;devuelve
 cmp al,1
-je mensaje1() ;vuelve donde corresponda
-jmp mensaje2()
-fin():
+je mensaje1() ;vuelve donde corresponda  
+
+
+jmp sub_menu2 
+
+fin(): 
+
 ret
 ;end  
 ;-----------------------juego ------------------------------------
 
+Juego_Snake:
+name "snake"
 
+call clear_screen
+; jump over data section:
+jmp     start
+ 
+; ------ data section ------
+ 
+s_size  equ     7
+ 
+; the snake coordinates
+; (from head to tail)
+; low byte is left, high byte
+; is top - [top, left]
+snake dw s_size dup(0)
+ 
+tail    dw      ?
+ 
+ 
+; ENUMS for grow_state
+  NO_CHANGE	= 0
+  BIGGER	= 1
+  SMALLER	= 2
+ 
+   NSEOI_OCW2 = 00100001b
+  PC_PIC	 = 20h
+ 
+; direction constants
+;          (bios key codes):
+left    equ     4bh
+right   equ     4dh
+up      equ     48h
+down    equ     50h
+ 
+cur_dir db      right
+wait_time dw    0
+ 
+start:
+ 
+     ; variables used for random
+  food_x    DB 1					; cordinates of the next food
+  food_y    DB 1					;
+  attribute DB 13					; color of next food
+  char      DB 41h				; char of next food
+  food_type DB 1  	; type of next food,
+				;0: '-' (makes snake smaller), o.w: ABC char
+ 
+   ; variables for current food
+  cur_food_x         DB 0
+  cur_food_y         DB 0
+  cur_food_type      DB 0
+  cur_food_char      DB 0
+  cur_food_attribute DB 0
+ 
+  grow_state 	DB NO_CHANGE ; options: NO_CHANGE, BIGGER or SMALLER
+ 
+  ezer_word  	DW 0
+  ezer_byte  	DB 0
+  ezer_byte2 	DB 0
+  direction_for_next_cycle DB UP  	; contains the direction for next
+						  ;cycle in main_loop
+  one_before 	DB 0		; flag to use in 'erase_tail' (see there)
+ 
+ 
+ 
+   .code
+  mov ax,@data ; ds<-@data
+  mov ds,ax
+ 
+   ;call print_food
+  ;call change_key_stroke_interrupt   ; changes the adress of routine resposible to response to key-stroke
+                                     ; to perform 'update_direction'
+  ;main_loop:
+   ;   mov loop_counter,0
+      ;call actions  ; performs all tasks for one movement: upadtes snake on screen, checks collision etc
+ 
+ 
+ 
+; hide text cursor:
+mov     ah, 1
+mov     ch, 2bh
+mov     cl, 0bh
+int     10h
+ 
+game_loop:
+ 
+; === select first video page
+mov     al, 0  ; page number.
+mov     ah, 05h
+int     10h
+ 
+; === show new head:
+mov     dx, snake[0]
+ 
+; set cursor at dl,dh
+mov     ah, 02h
+int     10h
+ 
+; print '*' at the location:
+mov     al, '*'
+mov     ah, 09h
+mov     bl, 0eh ; attribute.
+mov     cx, 1   ; single char.
+int     10h
+ 
+; === keep the tail:
+mov     ax, snake[s_size * 2 - 2]
+mov     tail, ax
+ 
+call    move_snake
+ 
+ 
+ 
+ 
+; === hide old tail:   solo la cabeza del gusanito cursor
+mov     dx, tail
+ 
+; set cursor at dl,dh       solo la cabeza del gusanito cursor
+mov     ah, 02h
+int     10h
+ 
+; print ' ' at the location:    necesario para que no se cicle
+mov     al, ' '
+mov     ah, 09h
+mov     bl, 0eh ; attribute.
+mov     cx, 1   ; single char.
+int     10h
+ 
+check_for_key:
+ 
+; === check for player commands:
+mov     ah, 01h
+int     16h
+jz      no_key
+ 
+mov     ah, 00h
+int     16h
+ 
+cmp     al, 1bh    ; esc - key?
+je      stop_game  ;
+ 
+mov     cur_dir, ah
+ 
+no_key:
+ 
+ 
+ 
+; === wait a few moments here:
+; get number of clock ticks
+; (about 18 per second)
+; since midnight into cx:dx
+mov     ah, 00h
+int     1ah
+cmp     dx, wait_time
+jb      check_for_key
+add     dx, 4
+mov     wait_time, dx
+ 
+; === eternal game loop:
+jmp     game_loop
+ 
+ 
+stop_game:
+ 
+; show cursor back:
+mov     ah, 1
+mov     ch, 0bh
+mov     cl, 0bh
+int     10h
+ 
+ret
+ 
+ 
+  move_snake proc near
+    ; set es to bios info segment:
+mov     ax, 40h
+mov     es, ax
+ 
+  ; point di to tail
+  mov   di, s_size * 2 - 2
+  ; move all body parts
+  ; (last one simply goes away)
+  mov   cx, s_size-1
+move_array:
+  mov   ax, snake[di-2]
+  mov   snake[di], ax
+  sub   di, 2
+  loop  move_array
+ 
+  cmp     cur_dir, left
+  je    move_left
+cmp     cur_dir, right
+  je    move_right
+cmp     cur_dir, up
+  je    move_up
+cmp     cur_dir, down
+  je    move_down
+ 
+jmp     stop_move       ; no direction.
+ 
+move_left:
+  mov   al, b.snake[0]
+  dec   al
+  mov   b.snake[0], al
+  cmp   al, -1
+  jne   stop_move
+  mov   al, es:[4ah]    ; col number.
+  dec   al
+  mov   b.snake[0], al  ; return to right.
+  jmp   stop_move
+ 
+  move_right:
+ 
+  mov   al, b.snake[0]
+  inc   al
+  mov   b.snake[0], al
+  cmp   al, es:[4ah]    ; col number.
+  jb    stop_move
+  mov   b.snake[0], 0   ; return to left.
+  jmp   stop_move
+ 
+  move_up:
+  mov   al, b.snake[1]
+  dec   al
+  mov   b.snake[1], al
+  cmp   al, -1
+  jne   stop_move
+  mov   al, es:[84h]    ; row number -1.
+  mov   b.snake[1], al  ; return to bottom.
+  jmp   stop_move
+ 
+  move_down:
+  mov   al, b.snake[1]
+  inc   al
+  mov   b.snake[1], al
+  cmp   al, es:[84h]    ; row number -1.
+  jbe   stop_move
+  mov   b.snake[1], 0   ; return to top.
+  jmp   stop_move
+ 
+  ;loop_counter,0
+ 
+  stop_move:
+  ret
+move_snake endp 
 
-
+ret
 
 
 ;-----------------------Serie Fibobacci ------------------------
 Fibonacci:
 call clear_screen
 
-PUSH    AX        
+PUSH    AX        ; this maro is copied from emu8086.inc ;
 
         MOV     AH, 0Eh
         INT     10h     
@@ -528,99 +790,97 @@ PUSH    AX
 ENDM
 
 JMP start2       ; jump to start label
-msg1 db "porfavor ingrese una valor para la cadena $" , 0Dh,0Ah, 24h ; define la variable 
-num1 dw ?       
+msg1 db "please enter the number of elemants in the sequance $" , 0Dh,0Ah, 24h ; define variable (message):
+num1 dw ?       ; number
 
-start2:  LEA     DX, msg1  ; carga direccion dx.
-        MOV     AH, 09h   
-        INT     21h       
+start2:  LEA     DX, msg1  ; load effective address of msg into dx.
+        MOV     AH, 09h   ; print function is 9.
+        INT     21h       ; do it 
               
-CALL SCAN_NUM   ; obtenga el numero firmado de varios dígitos del teclado y almacene el resultado en el registro cx:
+CALL SCAN_NUM   ; get the multi-digit signed number from the keyboard, and store the result in cx register:
 MOV num1,cx     
-putc 0Dh        
+putc 0Dh        ; new line:
 putc 0Ah        
 
-CMP CX, 1                  
-JLE lessthan               
+CMP CX, 1                  ; compare cx with one
+JLE lessthan               ; if cx is less than 1 jump to lessthan label
     
-greater_or_equal:          ; si cx no es menor que 1  / se hace comparacion
-    CMP CX, 25             ; compara cx con 25
-    JLE lessthan_or_equal  ; si cx es menor que 25 salta a less_or_equal
+greater_or_equal:          ; if cx isn't less than 1
+    CMP CX, 25             ; compare cx with 25
+    JLE lessthan_or_equal  ; if cx less than 25 jump to less_or_equal
     
-    greater__or__equal:   
-        JMP restart        ; salta a restart label
-        msg2 db "por favor ingrese el número adecuado en el rango de [1,25] $" , 0Dh,0Ah, 24h  ; define variable
+    greater__or__equal:    ; if cx more than 25
+        JMP restart        ; jump to restart label
+        msg2 db "please enter suitabal number in range of [1,25] $" , 0Dh,0Ah, 24h  ; define variable (message):
         
     
-        restart:  LEA     DX, msg2  ; direccion del mensaje dx
-                  MOV     AH, 09h   
-                  INT     21h       
+        restart:  LEA     DX, msg2  ; load effective address of msg into dx.
+                  MOV     AH, 09h   ; print function is 9.
+                  INT     21h       ; do it
                 
                   MOV     AH, 0 
-                  INT     16h       ; espera tecla de usuario  
-                  putc 0Dh         
+                  INT     16h       ; wait for any key any....  
+                  putc 0Dh          ; new line:
                   putc 0Ah
-                  JMP start2         ; salta a etiqueta inicio
+                  JMP start2         ; jump to start label
                                   
-lessthan:                 
-    CMP     CX, 0         ; comparar cx con 0
-    JNZ     restart2      ; si cx no es igual a 0 salta a reiniciar
-    JE stop               ; si cx es igual a 0 salta a la etiqueta en stop
+lessthan:                 ; less than label
+    CMP     CX, 0         ; compare cx with 0
+    JNZ     restart2      ; if cx not equal 0 jump to restart2
+    JE stop               ; if cx equal to 0 jump to stop label
 
-    stop:              
+    stop:                 ; stop label
     MOV AH, 4CH
-    MOV AL, 01            ;retorno
-    INT 21H              
+    MOV AL, 01            ; your return code.
+    INT 21H               ; do it
         
-    JMP restart2                                         
-    msg3 db "por favor ingrese el número adecuado en el rango de [1,25] $" , 0Dh,0Ah, 24h     
-                                                     ; define variable
+    JMP restart2          ; jump to restart2 label                               
+    msg3 db "please enter suitabal number in range of [1,25] $" , 0Dh,0Ah, 24h      ; define variable (message):
     
     restart2:
-               CMP     CX, 1                 ; compara cx con uno
-               JE      faboo                 
-               LEA     DX, msg3              ; cargue la direccion efectiva de msg en dx.
-               MOV     AH, 09h               
-               INT     21h                   
+               CMP     CX, 1                 ; compare cx with one
+               JE      faboo                 ; faboo than labe
+               LEA     DX, msg3              ; load effective address of msg into dx.
+               MOV     AH, 09h               ; print function is 9.
+               INT     21h                   ; do it
                
                MOV     AH, 0 
-               INT     16h                   
-               putc 0Dh                      
+               INT     16h                   ; wait for any key any....
+               putc 0Dh                      ; new line:
                putc 0Ah
-               JMP start2                     
+               JMP start2                     ; jump to start label
                              
-    lessthan_or_equal:              ; etiqueta menor que o igual
-        MOV BX, 1                   
-        MOV AX , 0                  
-        CALL PRINT_NUM              ; llame a la etiqueta print_num (imprima el valor en ax)
-        MOV AX , 1                  
-        CALL PRINT_NUM              
-        SUB CX, 1                   ; resta 1 de cx
+    lessthan_or_equal:              ; lessthan_or_equal label
+        MOV BX, 1                   ; move 1 to bx
+        MOV AX , 0                  ; move 0 to ax
+        CALL PRINT_NUM              ; call print_num label (print the value in ax)
+        MOV AX , 1                  ; move 1 to ax
+        CALL PRINT_NUM              ; call print_num label (print the value in ax)
+        SUB CX, 1                   ; substract 1 from cx
         fabo:   
-                ADD AX,BX           ; agregue ax a bx y almacene el resultado en ax
-                MOV [SI],AX         
-                MOV AX,BX           
-                MOV BX,[SI]         
-                CALL PRINT_NUM      
-                INC SI              ; incrementa si
+                ADD AX,BX           ; add ax to bx and store result at ax
+                MOV [SI],AX         ; move ax to memory location si
+                MOV AX,BX           ; move bx to ax
+                MOV BX,[SI]         ; move data of memory location si to bx
+                CALL PRINT_NUM      ; call print_num label (print the value in ax)
+                INC SI              ; increment si
                 
-        LOOP fabo R                 ;bucle fabo numero de bucles igual al valor de cx
-        putc 0Dh                    
+        LOOP fabo R                 ; loop the label fabo number of loops equal to the value of cx
+        putc 0Dh                    ; new line:
         putc 0Ah
-        JMP start2                  
+        JMP start2                   ; jump to start label 
         
         faboo:                 
-                MOV AX , 0                  
-                CALL PRINT_NUM              
-                MOV AX , 1                  
-                CALL PRINT_NUM             
-                putc 0Dh                    
+                MOV AX , 0                  ; move 0 to ax; move 0 to ax
+                CALL PRINT_NUM              ; call print_num label (print the value in ax)
+                MOV AX , 1                  ; move 1 to ax
+                CALL PRINT_NUM              ; call print_num label (print the value in ax)
+                putc 0Dh                    ; new line:
                 putc 0Ah
-                JMP start2                  
+                JMP start2                   ; jump to start label 
 
-                                                           
-; obtiene el numero FIRMADO de varios dígitos del teclado y almacena el resultado en 
-;el registro CX:                                  
+; these functions are copied from emu8086.inc                                                            
+; gets the multi-digit SIGNED number from the keyboard and stores the result in CX register:                                  
 SCAN_NUM2        PROC    NEAR
         PUSH    DX         
         PUSH    AX         
@@ -633,36 +893,36 @@ SCAN_NUM2        PROC    NEAR
 
 next_digit:
 
-        ;obtener caracteres del teclado
+        ; get char from keyboard
         ; into AL:
         MOV     AH, 00h
         INT     16h
-        ; imprimirlo
+        ; and print it:
         MOV     AH, 0Eh
         INT     10h
 
-        
+        ; check for MINUS:
         CMP     AL, '-'
         JE      set_minus
 
-      ; verifique la tecla ENTER:
-        CMP     AL, 0Dh  
+        ; check for ENTER key:
+        CMP     AL, 0Dh  ; carriage return?
         JNE     not_cr
         JMP     stop_input
 not_cr:
 
-        CMP     AL, 8                   ; retrocedo
+        CMP     AL, 8                   ; 'BACKSPACE' pressed?
         JNE     backspace_checked
-        MOV     DX, 0                   ; eliminar el último dígito por
+        MOV     DX, 0                   ; remove last digit by
         MOV     AX, CX                  ; division:
         DIV     CS:ten                  ; AX = DX:AX / 10 (DX-rem).
         MOV     CX, AX
         PUTC    ' '                     ; clear position.
-        PUTC    8                       ; retroceder de nuevo.
+        PUTC    8                       ; backspace again.
         JMP     next_digit
 backspace_checked:
 
-        ;permite solo digitos
+        ; allow only digits:
         CMP     AL, '0'
         JAE     ok_AE_0
         JMP     remove_not_digit
@@ -670,32 +930,32 @@ ok_AE_0:
         CMP     AL, '9'
         JBE     ok_digit
 remove_not_digit:       
-        PUTC    8          ; retroceder
-        PUTC    ' '        ;borrar el último digito no ingresado
-        PUTC    8          ;retroceder de nuevo.        
-        JMP     next_digit ; esperar a la siguiente entrada.       
+        PUTC    8          ; backspace.
+        PUTC    ' '        ; clear last entered not digit.
+        PUTC    8          ; backspace again.        
+        JMP     next_digit ; wait for next input.       
 ok_digit:
 
 
-        ; multiplica CX por 10 (primera vez el resultado es cero)
+        ; multiply CX by 10 (first time the result is zero)
         PUSH    AX
         MOV     AX, CX
         MUL     CS:ten     ; DX:AX = AX*10
         MOV     CX, AX
         POP     AX
 
-        ; compruebe si el numero es demasiado grande. 16 bits
+        ; check if the number is too big (result should be 16 bits) 
         CMP     DX, 0
         JNE     too_big
 
-        ; convertir de código ASCII
+        ; convert from ASCII code:
         SUB     AL, 30h
 
-        
+        ; add AL to CX:
         MOV     AH, 0
-        MOV     DX, CX     
+        MOV     DX, CX     ; backup, in case the result will be too big.
         ADD     CX, AX
-        JC      too_big2   ; salta si el número es demasiado grande.
+        JC      too_big2   ; jump if the number is too big.
 
         JMP     next_digit
 
@@ -704,19 +964,20 @@ set_minus:
         JMP     next_digit
 
 too_big2:
-        MOV     CX, DX     
-        MOV     DX, 0      
+        MOV     CX, DX     ; restore the backuped value before add.
+        MOV     DX, 0      ; DX was zero before backup!
 too_big:
         MOV     AX, CX
         DIV     CS:ten     ; reverse last DX:AX = AX*10, make AX = DX:AX / 10
         MOV     CX, AX
-        PUTC    8          ; retroceso.
-        PUTC    ' '        ; 
-        PUTC    8          ; retroceder de nuevo.        
-        JMP     next_digit ; espere Entrar/Retroceso.
-             
-stop_input:
+        PUTC    8          ; backspace.
+        PUTC    ' '        ; clear last entered digit.
+        PUTC    8          ; backspace again.        
+        JMP     next_digit ; wait for Enter/Backspace.
         
+        
+stop_input:
+        ; check flag:
         CMP     CS:make_minus, 0
         JE      not_minus
         NEG     CX
@@ -726,11 +987,10 @@ not_minus:
         POP     AX
         POP     DX
         RET
-make_minus      DB      ?       
-SCAN_NUM2       ENDP
+make_minus      DB      ?       ; used as a flag.
+SCAN_NUM2        ENDP
 
-; este procedimiento imprime el numero en AX usado con PRINT_NUM_UNS
-; para imprimir numeros con signo:
+; this procedure prints number in AX used with PRINT_NUM_UNS to print signed numbers: 
 PRINT_NUM2       PROC    NEAR
         PUSH    DX
         PUSH    AX
@@ -742,7 +1002,7 @@ PRINT_NUM2       PROC    NEAR
         JMP     printed
 
 not_zero:
-        ; el SIGNO de verificación de AX se convierte en absoluto si es negativo
+        ; the check SIGN of AX make absolute if it's negative: 
         CMP     AX, 0
         JNS     positive
         NEG     AX
@@ -758,47 +1018,55 @@ printed:
         RET
 PRINT_NUM2       ENDP
     
-
+; this procedure prints out an unsigned number in AX (not just a single digit) allowed values are from 0 to 65535 (FFFF) 
 PRINT_NUM_UNS2   PROC    NEAR
         PUSH    AX
         PUSH    BX
         PUSH    CX
         PUSH    DX
 
-        ;bandera para evitar la impresión de ceros antes del número:
+        ; flag to prevent printing zeros before number:
         MOV     CX, 1
 
-        ; (result of "/ 10000" siempre es menor o igual a 9).
-        MOV     BX, 10000       
+        ; (result of "/ 10000" is always less or equal to 9).
+        MOV     BX, 10000       ; 2710h - divider.
+
+        ; AX is zero?
         CMP     AX, 0
         JZ      print_zero
 
 begin_print:
 
-        ; verifique el divisor (si es cero, vaya a end_print):
+        ; check divider (if zero go to end_print):
         CMP     BX,0
         JZ      end_print
+
+        ; avoid printing zeros before number:
         CMP     CX, 0
         JE      calc
+        ; if AX<BX then result of DIV will be zero:
         CMP     AX, BX
         JB      skip
 calc:
-        MOV     CX, 0   
+        MOV     CX, 0   ; set flag.
 
         MOV     DX, 0
-        DIV     BX      
+        DIV     BX      ; AX = DX:AX / BX   (DX=remainder).
 
-       ; AH siempre es CERO, por lo que se ignora
-        ADD     AL, 30h    
+        ; print last digit
+        ; AH is always ZERO, so it's ignored
+        ADD     AL, 30h    ; convert to ASCII code.
         PUTC    AL
-        MOV     AX, DX  ; obtener el resto de la última div.
+
+
+        MOV     AX, DX  ; get remainder from last div.
 
 skip:
-       
+        ; calculate BX=BX/10
         PUSH    AX
         MOV     DX, 0
         MOV     AX, BX
-        DIV     CS:ten  ; AX = DX:AX / 10   (DX=resto).
+        DIV     CS:ten  ; AX = DX:AX / 10   (DX=remainder).
         MOV     BX, AX
         POP     AX
 
@@ -816,6 +1084,6 @@ end_print:
         RET
 PRINT_NUM_UNS2   ENDP  
 
-ten DW 10      
+ten DW 10      ; used as multiplier/divider by SCAN_NU
 
 ret
