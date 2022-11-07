@@ -1,4 +1,3 @@
-
 ; You may customize this and other start-up templates; 
 ; The location of this template is c:\emu8086\inc\0_com_template.txt
 include 'emu8086.inc'
@@ -141,16 +140,17 @@ ret
     
     ;-- llamada a submenu 1
     call opcion_submenu1
-    ret 
+    ret             
+    
      ; --- procedimiento proc
     opcion_submenu1 PROC     
         cmp al, 31h     ;compara el dato ingresado con el numero 1 ascii
         je Suma1         ;salta al submenu1
         
-        cmp al, 32h     ;compara el dato ingresado con el numero 1 ascii
+        cmp al, 32h     ;compara el dato ingresado con el numero 2 ascii
         je Resta1         ;salta al submenu1 
         
-        cmp al, 33h     ;compara el dato ingresado con el numero 1 ascii
+        cmp al, 33h     ;compara el dato ingresado con el numero 3 ascii
         je Multi1         ;salta al submenu1
         
         ret
@@ -171,17 +171,6 @@ ret
     mov ah,9
     int 21h
     
-    mov dx, offset subcadena2_2 ; mesaje submenu2_2
-    mov ah,9
-    int 21h 
-    
-    mov dx, offset subcadena2_3 ; mesaje submenu2_3
-    mov ah,9
-    int 21h
-    
-    mov dx, offset subcadena2_4 ; mesaje submenu2_4
-    mov ah,9
-    int 21h
     
      ;-- lectura / Recibir opcion
     mov ah, 1
@@ -190,7 +179,8 @@ ret
     
     ;-- llamada a submenu2
     call opcion_submenu2
-    ret 
+    ret    
+    
      ; --- procedimiento proc
     opcion_submenu2 PROC     
         cmp al, 31h     ;compara el dato ingresado con el numero 1 ascii
@@ -213,28 +203,22 @@ ret
     mov ah,9
     int 21h
     
-    mov dx, offset subcadena3_2 ; mesaje submenu3_2
-    mov ah,9
-    int 21h 
-    
-    mov dx, offset subcadena3_3 ; mesaje submenu3_3
-    mov ah,9
+      ;-- lectura / Recibir opcion
+    mov ah, 1
+    mov dx,20
     int 21h
     
-    mov dx, offset subcadena3_4 ; mesaje submenu3_4
-    mov ah,9
-    int 21h 
-    
-    mov dx, offset subcadena3_5 ; mesaje submenu3_5
-    mov ah,9
-    int 21h
-    
-    mov dx, offset subcadena3_6 ; mesaje submenu3_6
-    mov ah,9
-    int 21h  
-    
+    ;-- llamada a submenu2
+    call opcion_submenu3
+   
     ret
-    
+        
+    opcion_submenu3 PROC     
+        cmp al, 31h     ;compara el dato ingresado con el numero 1 ascii
+        je Juego_Snake  ;salta al juego snake
+        
+        ret
+     opcion_submenu3 ENDP    
     
     
     sub_menu4:
@@ -249,27 +233,20 @@ ret
     mov dx, offset subcadena4_1 ; mesaje submenu4_1
     mov ah,9
     int 21h
-    
-    mov dx, offset subcadena4_2 ; mesaje submenu4_2
-    mov ah,9
-    int 21h 
-    
-    mov dx, offset subcadena4_3 ; mesaje submenu4_3
-    mov ah,9
-    int 21h
          
        ;-- lectura / Recibir opcion
     mov ah, 1
     mov dx,20
     int 21h
     
-    ;-- llamada a submenu2
+    ;-- llamada a submenu4
     call opcion_submenu4
-    ret 
+    ret                      
+    
      ; --- procedimiento proc
     opcion_submenu4 PROC     
         cmp al, 31h     ;compara el dato ingresado con el numero 1 ascii
-        je   Fibonacci         ;salta al submenu1
+        je Fibonacci         ;salta al submenu1
         
         ret
      opcion_submenu4 ENDP 
@@ -283,7 +260,6 @@ ret
     mov dx, offset subcadenat5 ; Titulo de la seleccion
     mov ah,9
     int 21h
-    
     ret                              
     
     
@@ -299,10 +275,8 @@ ret
     mov dl,25  ;columna
     mov ah,2
     int 10h
-    ret
-    
-    
-                                               
+    ret 
+                                             
 
 ret
 
@@ -313,36 +287,251 @@ cadena4  db 10,13,"2. Operaciones de Cadenas","$"
 cadena5  db 10,13,"3. Juego","$"
 cadena6  db 10,13,"4. Operaciones de Recurrencia","$"
 cadena7  db 10,13,"5. Salir","$" 
-cadena8  db 10,13,"Ingrese una opcion :","$"  
+cadena8  db 10,13,"Ingrese una opcion :","$"   
+
 
    ;--- OPERACIONES BASICAS --------------------------------------------------
 subcadenat1  db "Operaciones Basicas","$"  
 subcadena1_1 db 10,13, "1. Suma ","$" 
 subcadena1_2 db 10,13, "2. Resta ","$"
 subcadena1_3 db 10,13, "3. Multiplicacion ","$" 
-subcadena1_4 db 10,13, "4. Division ","$"  
 
 
-   ;---- PALINDORMA ----------------------------------------------------------
+   ;---- PALINDROMA ----------------------------------------------------------
 subcadenat2  db "Operaciones De Cadenas","$" 
-subcadena2_1 db 10,13, "1. Determinar si una cadena es palindroma ","$"
-subcadena2_2 db 10,13, "2. Distancia de Leveshtein ","$"
-subcadena2_3 db 10,13, "3. Codificar un mensaje. ","$" 
-subcadena2_4 db 10,13, "4. Distancia de Hamming ","$" 
+subcadena2_1 db 10,13, "1. Determinar si una cadena es palindroma ","$" 
    
    ;------ JUEGOS -------------------------------------------------------------
 subcadenat3  db " Juegos ","$" 
-subcadena3_1 db 10,13, "1. Determinar si una cadena es palindroma ","$"
-subcadena3_2 db 10,13, "2. Distancia de Leveshtein ","$"
-subcadena3_3 db 10,13, "3. Codificar un mensaje. ","$" 
-subcadena3_4 db 10,13, "4. Distancia de Hamming ","$"   
-subcadena3_5 db 10,13, "5. Codificar un mensaje. ","$" 
-subcadena3_6 db 10,13, "6. Distancia de Hamming ","$" 
+subcadena3_1 db 10,13, "1. Juego Snake ","$"
 
+
+                                                     
+                                                      
+; --------- FIBONACCI --------------------------------------------------------   
+
+subcadenat4  db "Operaciones De Recurrencia ","$" 
+subcadena4_1 db 10,13, "1. Serie de Fibonacci ","$"
+ 
+
+
+subcadenat5  db " Saliendo ... ","$" 
+ret
+
+;--- Librerias a utilizar ---
+DEFINE_SCAN_NUM
+DEFINE_PRINT_STRING
+DEFINE_PRINT_NUM
+DEFINE_PRINT_NUM_UNS 
+DEFINE_PTHIS
+DEFINE_CLEAR_SCREEN
+DEFINE_GET_STRING 
+
+
+;------- Suma ---------------------------------------------------------     
+
+Suma1: 
+suma db 2 dup (?)  ;declaracion de variablede suma
+                   ;acumulara los datos
+
+call clear_screen
+gotoxy 30,1
+call pthis
+db '***Suma***',0    
+gotoxy 0,1
+call pthis
+db 'Ingrese el primer numero: ',0   
+call scan_num
+mov suma[0],cl
+gotoxy 0,2
+call pthis
+db 'Ingrese el segundo numero: ',0   
+call scan_num
+mov suma[1],cl                
+xor ax, ax ;Limpieza de operacion
+add al,suma[0]
+add al,suma[1]   
+gotoxy 0,3
+call pthis
+db 'El resultado de la suma es: ',0      
+call print_num  
+ret  
+
+;--- Resta ------------------------------------------------------ -------------
+Resta1:
+resta db 2 dup (?) ;declaracion de variablede resta
+                       ;acumulara los datos
+
+call clear_screen
+gotoxy 30,1
+call pthis
+db '***Resta***',0    
+gotoxy 0,4
+call pthis
+db 'Ingrese el primer numero: ',0   
+call scan_num
+mov resta[0],cl
+gotoxy 0,5
+call pthis
+db 'Ingrese el segundo numero: ',0   
+call scan_num
+mov resta[1],cl                
+xor ax, ax ;Limpieza de operacion
+mov al,resta[0]
+sub al,resta[1]   
+gotoxy 0,6
+call pthis
+db 'El resultado de la resta es: ',0      
+call print_num  
+ret
+
+;--- Multiplicacion -------------------------------------------------------
+Multi1: 
+
+multi db 2 dup (?)    ;declaracion de variablede multiplicacion
+                       ;acumulara los datos
+
+call clear_screen
+gotoxy 30,1
+call pthis
+db '***Multiplicacion***',0    
+gotoxy 0,7
+call pthis
+db 'Ingrese el primer numero: ',0   
+call scan_num
+mov multi[0],cl
+gotoxy 0,8
+call pthis
+db 'Ingrese el segundo numero: ',0   
+call scan_num
+mov multi[1],cl                
+xor ax, ax              ;Limpieza de operacion
+add al, multi[0]
+mul multi[1]   
+gotoxy 0,9
+call pthis
+db 'El resultado de la multiplicacion es: ',0      
+call print_num  
+ret
+
+;------------------- palindroma ----------------------------
+
+palindroma:  
+
+call clear_screen
+
+jmp inicio()
+palabra db 50h dup(?)
+aux1 db 0
+aux2 dw 0
+
+mensajes1:
+primero db 'Ingrese palabra: '
+;lz = $ - cod
+db 1Ah, '$'
+exito:
+exitomsj db 'La palabra ingresada es palindroma.'
+;lz = $ - cod
+db 7Fh,'$'
+fallo:
+fallomsj db 'La palabra ingresada no es palindroma.'
+;lz = $ - cod
+db 58h,'$'
+
+inicio():
+mov ah,9
+mov dx,offset primero
+int 21h
+
+mov bl,0dh ;tecla enter
+mov si,00d ;inicio del contador string
+mov ah,1
+
+lectura():
+int 21h   ;lectura de caracter
+mov palabra[si],al ;almacenamos en el vector string
+inc si    ;incremento variable SI
+cmp al,bl ;comparamos el caracter ingresado con el enter
+jne lectura()
+
+mov di,si
+dec di ;la variable si se pasa en dos posiciones, ya que almacena
+dec di ; el enter y el retorn, decrementa dos veces
+
+mov si,00d
+
+mov aux2,di ;almacenamos el largo en una variable
+
+compara():
+
+mov al,palabra[si]
+cmp palabra[di],al ;si son distintos no es palindroma
+jne no_palindromo()
+
+cmp si,aux2
+je palindromo()
+
+inc si
+dec di
+
+jmp compara()
+
+no_palindromo():
+mov aux1,1
+jmp imprime()
+mensaje1():
+;mov ah,0eh
+mov al,0ah
+int 10h
+
+mov dx,offset fallomsj
+mov ah,9
+int 21h
+jmp fin()
+
+palindromo():
+jmp imprime()
+mensaje2():
+;mov ah,0eh
+mov al,0ah
+int 10h
+
+mov dx,offset exitomsj
+mov ah,9
+int 21h
+jmp fin()
+
+imprime():
+mov di,aux2
+mov ah,0eh
+mov al,0ah
+int 10h
+mov si,-01d
+for():
+mov ah,0eh
+inc si
+mov al,palabra[si]
+int 10h
+cmp si,di
+jne for()
+
+mov al,aux1 ;devuelve
+cmp al,1
+je mensaje1() ;vuelve donde corresponda  
+
+
+jmp sub_menu2 
+
+fin(): 
+
+ret
+;end  
+;-----------------------juego ------------------------------------
+
+Juego_Snake:
 name "snake"
- 
-org     100h
- 
+
+call clear_screen
 ; jump over data section:
 jmp     start
  
@@ -584,230 +773,14 @@ move_left:
  
   stop_move:
   ret
-move_snake endp                                                      
-                                                      
-; --------- FIBONACCI --------------------------------------------------------   
+move_snake endp 
 
-subcadenat4  db "Operaciones De Recurrencia ","$" 
-subcadena4_1 db 10,13, "1. Serie de Fibonacci ","$"
-subcadena4_2 db 10,13, "2. Serie Aritmetica ","$"
-subcadena4_3 db 10,13, "3. Triangulo De Pascal ","$" 
-
-
-subcadenat5  db " Saliendo ... ","$" 
 ret
-
-;--- Librerias a utilizar ---
-DEFINE_SCAN_NUM
-DEFINE_PRINT_STRING
-DEFINE_PRINT_NUM
-DEFINE_PRINT_NUM_UNS 
-DEFINE_PTHIS
-DEFINE_CLEAR_SCREEN
-DEFINE_GET_STRING 
-
-
-;------- Suma ---------------------------------------------------------     
-
-Suma1: 
-suma db 2 dup (?)  ;declaracion de variablede suma
-                   ;acumulara los datos
-
-call clear_screen
-gotoxy 30,1
-call pthis
-db '***Suma***',0    
-gotoxy 0,1
-call pthis
-db 'Ingrese el primer numero: ',0   
-call scan_num
-mov suma[0],cl
-gotoxy 0,2
-call pthis
-db 'Ingrese el segundo numero: ',0   
-call scan_num
-mov suma[1],cl                
-xor ax, ax ;Limpieza de operacion
-add al,suma[0]
-add al,suma[1]   
-gotoxy 0,3
-call pthis
-db 'El resultado de la suma es: ',0      
-call print_num  
-ret  
-
-;--- Resta ------------------------------------------------------ -------------
-Resta1:
-resta db 2 dup (?) ;declaracion de variablede resta
-                       ;acumulara los datos
-
-call clear_screen
-gotoxy 30,1
-call pthis
-db '***Resta***',0    
-gotoxy 0,4
-call pthis
-db 'Ingrese el primer numero: ',0   
-call scan_num
-mov resta[0],cl
-gotoxy 0,5
-call pthis
-db 'Ingrese el segundo numero: ',0   
-call scan_num
-mov resta[1],cl                
-xor ax, ax ;Limpieza de operacion
-mov al,resta[0]
-sub al,resta[1]   
-gotoxy 0,6
-call pthis
-db 'El resultado de la resta es: ',0      
-call print_num  
-ret
-
-;--- Multiplicacion -------------------------------------------------------
-Multi1: 
-
-multi db 2 dup (?)    ;declaracion de variablede multiplicacion
-                       ;acumulara los datos
-
-call clear_screen
-gotoxy 30,1
-call pthis
-db '***Multiplicacion***',0    
-gotoxy 0,7
-call pthis
-db 'Ingrese el primer numero: ',0   
-call scan_num
-mov multi[0],cl
-gotoxy 0,8
-call pthis
-db 'Ingrese el segundo numero: ',0   
-call scan_num
-mov multi[1],cl                
-xor ax, ax              ;Limpieza de operacion
-add al, multi[0]
-mul multi[1]   
-gotoxy 0,9
-call pthis
-db 'El resultado de la multiplicacion es: ',0      
-call print_num  
-ret
-
-;------------------- palindroma ----------------------------
-
-palindroma:
-
-jmp inicio()
-palabra db 50h dup(?)
-aux1 db 0
-aux2 dw 0
-
-mensajes1:
-primero db 'Ingrese palabra: '
-;lz = $ - cod
-db 1Ah, '$'
-exito:
-exitomsj db 'La palabra ingresada es palindroma.'
-;lz = $ - cod
-db 7Fh,'$'
-fallo:
-fallomsj db 'La palabra ingresada no es palindroma.'
-;lz = $ - cod
-db 58h,'$'
-
-inicio():
-mov ah,9
-mov dx,offset primero
-int 21h
-
-mov bl,0dh ;tecla enter
-mov si,00d ;inicio del contador string
-mov ah,1
-
-lectura():
-int 21h   ;lectura de caracter
-mov palabra[si],al ;almacenamos en el vector string
-inc si    ;incremento variable SI
-cmp al,bl ;comparamos el caracter ingresado con el enter
-jne lectura()
-
-mov di,si
-dec di ;la variable si se pasa en dos posiciones, ya que almacena
-dec di ; el enter y el retorn, decrementa dos veces
-
-mov si,00d
-
-mov aux2,di ;almacenamos el largo en una variable
-
-compara():
-
-mov al,palabra[si]
-cmp palabra[di],al ;si son distintos no es palindroma
-jne no_palindromo()
-
-cmp si,aux2
-je palindromo()
-
-inc si
-dec di
-
-jmp compara()
-
-no_palindromo():
-mov aux1,1
-jmp imprime()
-mensaje1():
-;mov ah,0eh
-mov al,0ah
-int 10h
-
-mov dx,offset fallomsj
-mov ah,9
-int 21h
-jmp fin()
-
-palindromo():
-jmp imprime()
-mensaje2():
-;mov ah,0eh
-mov al,0ah
-int 10h
-
-mov dx,offset exitomsj
-mov ah,9
-int 21h
-jmp fin()
-
-imprime():
-mov di,aux2
-mov ah,0eh
-mov al,0ah
-int 10h
-mov si,-01d
-for():
-mov ah,0eh
-inc si
-mov al,palabra[si]
-int 10h
-cmp si,di
-jne for()
-
-mov al,aux1 ;devuelve
-cmp al,1
-je mensaje1() ;vuelve donde corresponda
-jmp mensaje2()
-fin():
-ret
-end 
-;-----------------------juego ------------------------------------
-
-
-
-
 
 
 ;-----------------------Serie Fibobacci ------------------------
- Fibonacci:
+Fibonacci:
+call clear_screen
 
 PUSH    AX        ; this maro is copied from emu8086.inc ;
 
@@ -816,11 +789,11 @@ PUSH    AX        ; this maro is copied from emu8086.inc ;
         POP     AX
 ENDM
 
-JMP START       ; jump to start label
+JMP start2       ; jump to start label
 msg1 db "please enter the number of elemants in the sequance $" , 0Dh,0Ah, 24h ; define variable (message):
 num1 dw ?       ; number
 
-start:  LEA     DX, msg1  ; load effective address of msg into dx.
+start2:  LEA     DX, msg1  ; load effective address of msg into dx.
         MOV     AH, 09h   ; print function is 9.
         INT     21h       ; do it 
               
@@ -849,7 +822,7 @@ greater_or_equal:          ; if cx isn't less than 1
                   INT     16h       ; wait for any key any....  
                   putc 0Dh          ; new line:
                   putc 0Ah
-                  JMP start         ; jump to start label
+                  JMP start2         ; jump to start label
                                   
 lessthan:                 ; less than label
     CMP     CX, 0         ; compare cx with 0
@@ -875,7 +848,7 @@ lessthan:                 ; less than label
                INT     16h                   ; wait for any key any....
                putc 0Dh                      ; new line:
                putc 0Ah
-               JMP start                     ; jump to start label
+               JMP start2                     ; jump to start label
                              
     lessthan_or_equal:              ; lessthan_or_equal label
         MOV BX, 1                   ; move 1 to bx
@@ -895,7 +868,7 @@ lessthan:                 ; less than label
         LOOP fabo R                 ; loop the label fabo number of loops equal to the value of cx
         putc 0Dh                    ; new line:
         putc 0Ah
-        JMP start                   ; jump to start label 
+        JMP start2                   ; jump to start label 
         
         faboo:                 
                 MOV AX , 0                  ; move 0 to ax; move 0 to ax
@@ -904,11 +877,11 @@ lessthan:                 ; less than label
                 CALL PRINT_NUM              ; call print_num label (print the value in ax)
                 putc 0Dh                    ; new line:
                 putc 0Ah
-                JMP start                   ; jump to start label 
+                JMP start2                   ; jump to start label 
 
 ; these functions are copied from emu8086.inc                                                            
 ; gets the multi-digit SIGNED number from the keyboard and stores the result in CX register:                                  
-SCAN_NUM        PROC    NEAR
+SCAN_NUM2        PROC    NEAR
         PUSH    DX         
         PUSH    AX         
         PUSH    SI        
@@ -1015,10 +988,10 @@ not_minus:
         POP     DX
         RET
 make_minus      DB      ?       ; used as a flag.
-SCAN_NUM        ENDP
+SCAN_NUM2        ENDP
 
 ; this procedure prints number in AX used with PRINT_NUM_UNS to print signed numbers: 
-PRINT_NUM       PROC    NEAR
+PRINT_NUM2       PROC    NEAR
         PUSH    DX
         PUSH    AX
          
@@ -1043,10 +1016,10 @@ printed:
         PUTC    ','
         POP     DX
         RET
-PRINT_NUM       ENDP
+PRINT_NUM2       ENDP
     
 ; this procedure prints out an unsigned number in AX (not just a single digit) allowed values are from 0 to 65535 (FFFF) 
-PRINT_NUM_UNS   PROC    NEAR
+PRINT_NUM_UNS2   PROC    NEAR
         PUSH    AX
         PUSH    BX
         PUSH    CX
@@ -1109,7 +1082,7 @@ end_print:
         POP     BX
         POP     AX
         RET
-PRINT_NUM_UNS   ENDP  
+PRINT_NUM_UNS2   ENDP  
 
 ten DW 10      ; used as multiplier/divider by SCAN_NU
 
