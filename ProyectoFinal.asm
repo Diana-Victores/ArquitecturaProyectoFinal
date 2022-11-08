@@ -1,5 +1,9 @@
-; You may customize this and other start-up templates; 
-; The location of this template is c:\emu8086\inc\0_com_template.txt
+
+;---- Integrantes 
+; Diana Victores  9959-19-1471
+; Josue Amaya     0901-19-12421
+; Jonathan Xuya   0901-18-11371
+
 include 'emu8086.inc'
 
 org 100h  
