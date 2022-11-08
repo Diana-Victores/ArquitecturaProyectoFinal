@@ -532,23 +532,24 @@ Juego_Snake:
 name "snake"
 
 call clear_screen
-; jump over data section:
+
+; saltar sobre la sección de datos:
 jmp     start
  
 ; ------ data section ------
  
 s_size  equ     7
  
-; the snake coordinates
-; (from head to tail)
-; low byte is left, high byte
-; is top - [top, left]
+; las coordenadas de la serpiente
+; (de la cabeza a la cola)
+; queda byte bajo, byte alto
+; es arriba - [arriba, izquierda]
 snake dw s_size dup(0)
  
 tail    dw      ?
  
  
-; ENUMS for grow_state
+; ENUMS para estado de crecimiento
   NO_CHANGE	= 0
   BIGGER	= 1
   SMALLER	= 2
@@ -556,8 +557,9 @@ tail    dw      ?
    NSEOI_OCW2 = 00100001b
   PC_PIC	 = 20h
  
-; direction constants
-;          (bios key codes):
+
+; constantes de direccion
+; (codigos clave de bios):
 left    equ     4bh
 right   equ     4dh
 up      equ     48h
@@ -568,46 +570,50 @@ wait_time dw    0
  
 start:
  
-     ; variables used for random
-  food_x    DB 1					; cordinates of the next food
+    
+; variables utilizadas para random
+  food_x    DB 1					
+; coordinadas de la siguiente comida
   food_y    DB 1					;
-  attribute DB 13					; color of next food
-  char      DB 41h				; char of next food
-  food_type DB 1  	; type of next food,
-				;0: '-' (makes snake smaller), o.w: ABC char
+  attribute DB 13					
+  char      DB 41h				
+  food_type DB 1  	
+; tipo de proxima comida,
+				
+;0: '-' (hace que la serpiente sea mas pequena), o.w: ABC char
  
-   ; variables for current food
+; variables para alimentos actuales
   cur_food_x         DB 0
   cur_food_y         DB 0
   cur_food_type      DB 0
   cur_food_char      DB 0
   cur_food_attribute DB 0
  
-  grow_state 	DB NO_CHANGE ; options: NO_CHANGE, BIGGER or SMALLER
+  grow_state 	DB NO_CHANGE ; opciones: SIN CAMBIO, MAS GRANDE o MAS PEQUENO
  
   ezer_word  	DW 0
   ezer_byte  	DB 0
   ezer_byte2 	DB 0
-  direction_for_next_cycle DB UP  	; contains the direction for next
-						  ;cycle in main_loop
-  one_before 	DB 0		; flag to use in 'erase_tail' (see there)
+  direction_for_next_cycle DB UP  	; contiene la direccion para el proximo
+						  ;ciclo en bucle_principal
+  one_before 	DB 0		; bandera para usar en 'erase_tail' (ver allI)
  
  
  
    .code
-  mov ax,@data ; ds<-@data
+  mov ax,@data
   mov ds,ax
  
-   ;call print_food
-  ;call change_key_stroke_interrupt   ; changes the adress of routine resposible to response to key-stroke
-                                     ; to perform 'update_direction'
-  ;main_loop:
-   ;   mov loop_counter,0
-      ;call actions  ; performs all tasks for one movement: upadtes snake on screen, checks collision etc
+  ent: up;llamar a imprimir_comida
+ ;llamar a change_key_stroke_interrupt ; cambia la direccion de la rutina responsable de la respuesta a la pulsación de tecla
+                                     ; para realizar 'update_direction'
+  ;bucle principal:
+   ; mov bucle_contador,0
+      ;llamar acciones; realiza todas las tareas para una serpiente movemadtes en la pantalla, verifica la colisión, etc.
  
  
  
-; hide text cursor:
+; ocultar cursor de texto:
 mov     ah, 1
 mov     ch, 2bh
 mov     cl, 0bh
@@ -615,26 +621,30 @@ int     10h
  
 game_loop:
  
-; === select first video page
-mov     al, 0  ; page number.
+; === seleccione la primera pagina de video
+mov     al, 0 ; numero de pagina.
 mov     ah, 05h
 int     10h
  
-; === show new head:
+; === mostrar nueva cabeza:
 mov     dx, snake[0]
  
-; set cursor at dl,dh
+
+; poner el cursor en dl,dh
 mov     ah, 02h
 int     10h
  
-; print '*' at the location:
+
+; imprime '*' en la ubicacion:
 mov     al, '*'
 mov     ah, 09h
-mov     bl, 0eh ; attribute.
-mov     cx, 1   ; single char.
+mov     bl, 0eh 
+; atributo.
+mov     cx, 1   
+; caracter unico
 int     10h
  
-; === keep the tail:
+; === mantener la cola:
 mov     ax, snake[s_size * 2 - 2]
 mov     tail, ax
  
@@ -643,23 +653,29 @@ call    move_snake
  
  
  
-; === hide old tail:   solo la cabeza del gusanito cursor
+
+
+; === ocultar cola vieja: solo la cabeza del gusanito cursor
 mov     dx, tail
  
-; set cursor at dl,dh       solo la cabeza del gusanito cursor
+
+; poner el cursor en dl,dh solo la cabeza del cursor gusanito
 mov     ah, 02h
 int     10h
  
-; print ' ' at the location:    necesario para que no se cicle
+
+; imprime '' en la ubicación: necesario para que no se cicle
 mov     al, ' '
 mov     ah, 09h
-mov     bl, 0eh ; attribute.
-mov     cx, 1   ; single char.
+mov     bl, 0eh
+; atributo.
+mov     cx, 1   ; caracter unico
 int     10h
  
 check_for_key:
  
-; === check for player commands:
+
+; === verifique los comandos del jugador:
 mov     ah, 01h
 int     16h
 jz      no_key
@@ -676,10 +692,10 @@ no_key:
  
  
  
-; === wait a few moments here:
-; get number of clock ticks
-; (about 18 per second)
-; since midnight into cx:dx
+; === espera unos momentos aquí:
+; obtener el número de tics de reloj
+; (alrededor de 18 por segundo)
+; desde medianoche en cx:dx
 mov     ah, 00h
 int     1ah
 cmp     dx, wait_time
@@ -687,13 +703,14 @@ jb      check_for_key
 add     dx, 4
 mov     wait_time, dx
  
-; === eternal game loop:
+
+; === bucle de juego eterno:
 jmp     game_loop
  
  
 stop_game:
  
-; show cursor back:
+; mostrar el cursor hacia atrás:
 mov     ah, 1
 mov     ch, 0bh
 mov     cl, 0bh
@@ -703,14 +720,15 @@ ret
  
  
   move_snake proc near
-    ; set es to bios info segment:
+  
+; establecer es en el segmento de información de bios:
 mov     ax, 40h
 mov     es, ax
  
-  ; point di to tail
+; punto di a la cola
   mov   di, s_size * 2 - 2
-  ; move all body parts
-  ; (last one simply goes away)
+ ; mover todas las partes del cuerpo
+  ; (el ultimo simplemente se va)
   mov   cx, s_size-1
 move_array:
   mov   ax, snake[di-2]
@@ -727,7 +745,8 @@ cmp     cur_dir, up
 cmp     cur_dir, down
   je    move_down
  
-jmp     stop_move       ; no direction.
+jmp     stop_move       
+; sin direccion.
  
 move_left:
   mov   al, b.snake[0]
@@ -735,9 +754,9 @@ move_left:
   mov   b.snake[0], al
   cmp   al, -1
   jne   stop_move
-  mov   al, es:[4ah]    ; col number.
+  mov   al, es:[4ah]    ; col numero.
   dec   al
-  mov   b.snake[0], al  ; return to right.
+  mov   b.snake[0], al  ; volver a la derecha.
   jmp   stop_move
  
   move_right:
@@ -745,9 +764,9 @@ move_left:
   mov   al, b.snake[0]
   inc   al
   mov   b.snake[0], al
-  cmp   al, es:[4ah]    ; col number.
+  cmp   al, es:[4ah]    ; col numero.
   jb    stop_move
-  mov   b.snake[0], 0   ; return to left.
+  mov   b.snake[0], 0  ; volver a la izquierda.
   jmp   stop_move
  
   move_up:
@@ -756,21 +775,21 @@ move_left:
   mov   b.snake[1], al
   cmp   al, -1
   jne   stop_move
-  mov   al, es:[84h]    ; row number -1.
-  mov   b.snake[1], al  ; return to bottom.
+  mov   al, es:[84h]    ; row numero -1.
+  mov   b.snake[1], al  ; volver al fondo.
   jmp   stop_move
  
   move_down:
   mov   al, b.snake[1]
   inc   al
   mov   b.snake[1], al
-  cmp   al, es:[84h]    ; row number -1.
+  cmp   al, es:[84h]    ; row numero -1.
   jbe   stop_move
-  mov   b.snake[1], 0   ; return to top.
+  mov   b.snake[1], 0  ; volver a la cima.
   jmp   stop_move
  
-  ;loop_counter,0
- 
+
+;contador_de_bucles,0
   stop_move:
   ret
 move_snake endp 
